@@ -14,5 +14,5 @@ COPY . .
 # Expõe a porta que o Cloud Run exige (8080)
 EXPOSE 8080
 
-# Comando para rodar a interface web do Streamlit
-CMD ["streamlit", "run", "app.py", "--server.port=8080", "--server.address=0.0.0.0"]
+# Comando OFICIAL para rodar a interface nativa do ADK no Cloud Run
+CMD ["adk", "web", "--agent", "agents/lead_advisor.py", "--port", "8080"]
