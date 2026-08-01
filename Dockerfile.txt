@@ -18,4 +18,4 @@ ENV STREAMLIT_SERVER_ADDRESS=0.0.0.0
 ENV STREAMLIT_SERVER_HEADLESS=true
 
 # Comando de entrada utilizando o streamlit diretamente para rodar a interface do ADK
-CMD ["sh", "-c", "adk web agents/lead_advisor.py --server.port $PORT --server.address 0.0.0.0"]
+CMD ["sh", "-c", "adk web app.py --host 0.0.0.0 --port $PORT"]
