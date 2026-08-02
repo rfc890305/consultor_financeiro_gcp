@@ -19,4 +19,4 @@ ENV STREAMLIT_SERVER_HEADLESS=true
 ENV STREAMLIT_SERVER_ENABLE_CORS=false
 ENV STREAMLIT_SERVER_ENABLE_XSRF_PROTECTION=false
 
-CMD ["sh", "-c", "adk web app.py --host 0.0.0.0 --port $PORT --allow_origins \"regex:https://.*\\.run\\.app\""]
+CMD ["sh", "-c", "adk web --host 0.0.0.0 --port $PORT --allow_origins '*'"]
