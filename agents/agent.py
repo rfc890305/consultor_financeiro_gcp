@@ -2,6 +2,7 @@ import os
 import logging
 from typing import List
 from dotenv import load_dotenv
+import requests
 
 # Importações do Google ADK
 from google.adk import Agent
@@ -22,12 +23,21 @@ RETRY_OPTIONS = types.HttpRetryOptions(initial_delay=1, max_delay=3, attempts=30
 # ==========================================
 # 1. FERRAMENTAS (TOOLS)
 # ==========================================
-def consultar_brapi_tool(tool_context: ToolContext, ticket: str, analise: str) -> dict[str, str]:
-    """Busca dados de um ativo e salva no estado da sessão."""
-    estado_atual = tool_context.state.get("dados_b3", [])
-    tool_context.state["dados_b3"] = estado_atual + [f"Ativo {ticket}: {analise}"]
-    logging.info(f"[Ferramenta] Dados salvos para {ticket}")
-    return {"status": "success"}
+
+def consultar_bolsa_ai_tool(tool_context: ToolContext, ticker: str) -> dict:
+    """Busca dados fundamentalistas de um ativo utilizando a API externa."""
+    url = f"https://api.usebolsai.com/api/v1/fundamentals/{ticker.upper()}"
+    headers = {"X-API-Key": os.getenv("BOLSA_AI_KEY")}
+    
+    try:
+        response = requests.get(url, headers=headers)
+        if response.status_code == 200:
+            dados = response.json()
+            return {"status": "success", "dados": dados}
+        else:
+            return {"status": "error", "mensagem": f"Erro HTTP {response.status_code}"}
+    except Exception as e:
+        return {"status": "error", "mensagem": str(e)}
 
 # ==========================================
 # 2. AGENTES ESPECIALISTAS (INTERNOS)
@@ -44,8 +54,9 @@ analista_tecnico = Agent(
     1. SEMPRE TRAZER O VALOR DA AÇÃO, A DATA DE REFERÊNCIA E A FONTE PESQUISA.
     2. SEJA SUCINTO, MAS ENTREGUE UMA ANÁLISE DE TENDÊNCIA DA AÇÃO.
     3. Sua resposta será lida apenas por outro agente (Conselheiro de Risco). Nunca saúde o usuário.
+    4. Utilize os dados do consultar_bolsa_ai_tool retornados em JSON usando as informações mais apropriadas.
     """,
-    tools=[consultar_brapi_tool]
+    tools=[consultar_bolsa_ai_tool]
 )
 
 agente_pesquisador = Agent(
@@ -59,13 +70,13 @@ agente_pesquisador = Agent(
     """
 )
 
-# Encapsula o agente_pesquisador como ferramenta para o Agente Estrategista
+# Encapsula o agente_pesquisador como ferramenta para o conselheiro
 ferramenta_pesquisador = AgentTool(agent=agente_pesquisador)
 
 agente_estrategista = Agent(
     name="agente_estrategista",
     model=Gemini(model=MODELO, retry_options=RETRY_OPTIONS),
-    description="O estrategista que consolida o perfil do cliente e os dados dos subagentes para gerar a recomendação final.",
+    description="O cérebro que consolida o perfil do cliente e os dados dos subagentes para gerar a recomendação final.",
     instruction="""
         Você é o Lead Advisor da Quantum Finance. Você assume o atendimento após o cliente detalhar o perfil dele.
         
